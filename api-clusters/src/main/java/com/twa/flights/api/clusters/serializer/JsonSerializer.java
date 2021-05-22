@@ -29,7 +29,8 @@ public class JsonSerializer {
     public static byte[] serialize(Object object) {
         byte[] compressedJson = null;
         try {
-            compressedJson = OBJECT_MAPPER.writeValueAsString(object).getBytes();
+            String json = OBJECT_MAPPER.writeValueAsString(object);
+            compressedJson = StringSerializer.gzip(json);
         } catch (IOException e) {
             LOGGER.error("Error serializing object: {}", e.getMessage());
         }
@@ -42,7 +43,8 @@ public class JsonSerializer {
 
         T object = null;
         try {
-            object = OBJECT_MAPPER.readValue(raw, reference);
+            String json = StringSerializer.ungzip(raw);
+            object = OBJECT_MAPPER.readValue(json, reference);
         } catch (IOException e) {
             LOGGER.error("Can't deserialize object: {}", e.getMessage());
         }
