@@ -30,6 +30,10 @@ chaos:
 spring:
   profiles:
     active: default
+  compression:
+    enabled: true
+    mime-types: application/json
+  http2.enabled: true
 
 redis:
   host: localhost
