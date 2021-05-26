@@ -27,7 +27,7 @@ cache:
 
 chaos:
   monkey:
-    enabled: true
+    enabled: false
     watcher:
       restController: true
     assaults:
