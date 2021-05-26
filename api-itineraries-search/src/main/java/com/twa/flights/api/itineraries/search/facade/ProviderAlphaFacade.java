@@ -26,7 +26,7 @@ public class ProviderAlphaFacade implements ProviderFacade {
         this.itinerariesSearchConnector = itinerariesSearchConnector;
     }
 
-    @CircuitBreaker(name = "provider-alpha", fallbackMethod = "empty")
+    @CircuitBreaker(name = "provider-alpha")
     public List<ItineraryDTO> availability(AvailabilityRequestDTO request) {
         LOGGER.debug("Obtain the information about the flights");
         return itinerariesSearchConnector.availability(request);
@@ -37,8 +37,4 @@ public class ProviderAlphaFacade implements ProviderFacade {
         return Provider.ALPHA;
     }
 
-    private List<ItineraryDTO> empty(AvailabilityRequestDTO request, Throwable throwable) {
-        LOGGER.error("Fallback for '/api/flights/provider/alpha/itineraries'");
-        return Collections.emptyList();
-    }
 }
