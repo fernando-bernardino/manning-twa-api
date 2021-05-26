@@ -1,7 +1,9 @@
 package com.twa.flights.api.itineraries.search.facade;
 
-import java.util.List;
+import java.util.*;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ public class ProviderAlphaFacade implements ProviderFacade {
         this.itinerariesSearchConnector = itinerariesSearchConnector;
     }
 
+    @CircuitBreaker(name = "provider-alpha", fallbackMethod = "empty")
     public List<ItineraryDTO> availability(AvailabilityRequestDTO request) {
         LOGGER.debug("Obtain the information about the flights");
         return itinerariesSearchConnector.availability(request);
@@ -34,4 +37,8 @@ public class ProviderAlphaFacade implements ProviderFacade {
         return Provider.ALPHA;
     }
 
+    private List<ItineraryDTO> empty(AvailabilityRequestDTO request, Throwable throwable) {
+        LOGGER.error("Fallback for '/api/flights/provider/alpha/itineraries'");
+        return Collections.emptyList();
+    }
 }

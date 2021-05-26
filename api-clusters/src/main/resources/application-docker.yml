@@ -55,4 +55,12 @@ connector:
       host: api-itineraries-search:7070
       responseTimeout: 10000
       connectionTimeout: 10000
-      readTimeout: 10000         
+      readTimeout: 10000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      pricing:
+        ringBufferSizeInHalfOpenState: 4
+        ringBufferSizeInClosedState: 4
+        waitDurationInOpenState: 60
