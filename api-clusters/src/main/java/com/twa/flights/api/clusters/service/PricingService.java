@@ -1,18 +1,18 @@
 package com.twa.flights.api.clusters.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.twa.flights.api.clusters.dto.*;
+import com.twa.flights.common.dto.itinerary.*;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.twa.flights.api.clusters.connector.PricingConnector;
-import com.twa.flights.api.clusters.dto.UpdatedPriceInfoDTO;
-import com.twa.flights.common.dto.itinerary.ItineraryDTO;
-import com.twa.flights.common.dto.itinerary.PriceInfoDTO;
 
 @Service
 public class PricingService {
@@ -26,6 +26,7 @@ public class PricingService {
         this.pricingConnector = pricingConnector;
     }
 
+    @CircuitBreaker(name = "pricing", fallbackMethod = "fallbackPriceItineraries")
     public List<ItineraryDTO> priceItineraries(List<ItineraryDTO> itineraries) {
         LOGGER.debug("Pricing itineraries");
 
@@ -58,5 +59,26 @@ public class PricingService {
             priceInfo.getInfants().setMarkup(updatedPriceInfo.getInfants().getMarkup());
             priceInfo.getInfants().setTotal(updatedPriceInfo.getInfants().getTotal());
         }
+    }
+
+
+    private List<ItineraryDTO> fallbackPriceItineraries(List<ItineraryDTO> itineraries, Throwable throwable) {
+        LOGGER.error("Fallback for '/api/flights/pricing/itineraries'", throwable);
+        itineraries.forEach(i -> updatePriceInfo(zeroUpdatedPriceInfoDTO(), i));
+        return itineraries;
+    }
+
+    private UpdatedPriceInfoDTO zeroUpdatedPriceInfoDTO() {
+        UpdatedPriceInfoDTO dto = new UpdatedPriceInfoDTO();
+        dto.setAdults(zeroPriceInfoDTO());
+        dto.setInfants(zeroPriceInfoDTO());
+        dto.setChildren(zeroPriceInfoDTO());
+        return dto;
+    }
+
+    private UpdatedPaxPriceDTO zeroPriceInfoDTO() {
+        UpdatedPaxPriceDTO zeroMarkup = new UpdatedPaxPriceDTO();
+        zeroMarkup.setMarkup(new MarkupDTO(BigDecimal.ZERO, BigDecimal.ZERO));
+        return zeroMarkup;
     }
 }
