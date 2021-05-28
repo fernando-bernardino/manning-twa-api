@@ -78,3 +78,9 @@ resilience4j:
           - java.lang.InterruptedException
           - io.netty.handler.timeout.ReadTimeoutException
           - org.springframework.web.reactive.function.client.WebClientRequestException
+
+zookeeper:
+  host: localhost:2181
+  maxRetries: 2
+  timeBetweenRetries: 100
+  connectionTimeout: 1000

@@ -39,6 +39,7 @@ public class ClustersService {
 
         ClusterSearchDTO response = null;
 
+        //  I think this is what we were intended to implement on step 1, wasn't it?
         if (StringUtils.isEmpty(request.getId())) { // New search
             response = availabilityFromProviders(request);
         } else { // Pagination old search
