@@ -45,6 +45,13 @@ connector:
 
 
 resilience4j:
+  ratelimiter:
+    configs:
+      default:
+        timeoutDuration: 1000
+        registerHealthIndicator: true
+        limitRefreshPeriod: 15s
+        limitForPeriod: 2
   circuitbreaker:
     instances:
       provider-beta:

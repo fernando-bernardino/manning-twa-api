@@ -3,6 +3,7 @@ package com.twa.flights.api.itineraries.search.facade;
 import java.util.*;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +27,16 @@ public class ProviderAlphaFacade implements ProviderFacade {
         this.itinerariesSearchConnector = itinerariesSearchConnector;
     }
 
+    @RateLimiter(name = "consumer", fallbackMethod = "empty")
     @CircuitBreaker(name = "provider-alpha")
     public List<ItineraryDTO> availability(AvailabilityRequestDTO request) {
         LOGGER.debug("Obtain the information about the flights");
         return itinerariesSearchConnector.availability(request);
+    }
+
+    private List<ItineraryDTO> empty(AvailabilityRequestDTO request, Throwable throwable) {
+        LOGGER.error("Falling back to empty list", throwable);
+        return Collections.emptyList();
     }
 
     @Override
