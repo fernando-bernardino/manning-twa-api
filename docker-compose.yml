@@ -84,3 +84,12 @@ services:
     restart: always
     links:
       - api-clusters-remote-cache
+
+  api-flights-zookeeper:
+    container_name: api-clusters-remote-cache
+    image: bitnami/zookeeper:3-debian-10
+    restart: always
+    ports:
+      - 2181:2181
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: true
