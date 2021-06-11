@@ -1,6 +1,6 @@
 package com.twa.flights.api.clusters.service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,13 +25,18 @@ public class ClustersService {
     private final ItinerariesSearchService itinerariesSearchService;
     private final PricingService pricingService;
     private final ClustersRepository repository;
+    private final ZooKeeperService zooKeeperService;
 
     @Autowired
-    public ClustersService(ItinerariesSearchService itinerariesSearchService, PricingService pricingService,
-            ClustersRepository repository) {
+    public ClustersService(
+            ItinerariesSearchService itinerariesSearchService,
+            PricingService pricingService,
+            ClustersRepository repository,
+            ZooKeeperService zooKeeperService) {
         this.itinerariesSearchService = itinerariesSearchService;
         this.pricingService = pricingService;
         this.repository = repository;
+        this.zooKeeperService = zooKeeperService;
     }
 
     public ClusterSearchDTO availability(ClustersAvailabilityRequestDTO request) {
@@ -49,13 +54,24 @@ public class ClustersService {
         return response;
     }
 
+    private ClusterSearchDTO availabilityFromBarrierOrProvider(ClustersAvailabilityRequestDTO request) {
+        String barrierName = buildBarrierPath(request.getId());
+        if (isBarrierCreated(barrierName)) {
+            zooKeeperService.waitOnBarrier(barrierName);
+
+            return availabilityFromDatabase(request);
+        }
+        return availabilityFromProviders(request);
+    }
+
     private ClusterSearchDTO availabilityFromProviders(ClustersAvailabilityRequestDTO request) {
         ClusterSearchDTO response;
         List<ItineraryDTO> itineraries = itinerariesSearchService.availability(request);
 
         itineraries = pricingService.priceItineraries(itineraries);
-        itineraries = itineraries.stream().sorted((itineraryOne, itineraryTwo) -> itineraryOne.getPriceInfo()
-                .getTotalAmount().compareTo(itineraryTwo.getPriceInfo().getTotalAmount())).collect(Collectors.toList());
+        itineraries = itineraries.stream().sorted(Comparator
+          .comparing(itineraryOne -> itineraryOne.getPriceInfo().getTotalAmount()))
+          .collect(Collectors.toList());
 
         response = repository.insert(request, itineraries);
 
@@ -83,6 +99,14 @@ public class ClustersService {
         response.setItineraries(
                 itineraries.stream().skip(skip).limit(request.getAmount()).collect(Collectors.toList()));
         return response;
+    }
+
+    private String buildBarrierPath(String requestId) {
+        return "/barrier/" + requestId;
+    }
+
+    private synchronized boolean isBarrierCreated(String barrierName) {
+        return zooKeeperService.checkIfBarrierExists(barrierName) || zooKeeperService.createBarrier(barrierName);
     }
 
 }
